@@ -176,7 +176,7 @@
                   </div>
              </div>
        <%--发送短信--%>
-       <div id="sendmessage" class="modal fade" tabindex="-1" role="dialog">
+       <div id="sendmessage" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
            <div class="modal-dialog" role="document" style="width:700px;">
                <div class="modal-content">
                    <div class="modal-header">

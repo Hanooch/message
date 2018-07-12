@@ -96,7 +96,7 @@ function Init(evt) {
                     var content = '<div class="active tab-pane" id="tab' + j + '">' +
                                   '<input type="hidden" id="childdesinid' + j + '" value="' + childdesigns[j].chid+'">'+
                                   '<div class="single-row"><div class="item col-xs-12"> <span class="form-text col-xs-2" style="padding-left:0px;width:11%">首次预约：</span>' +
-                                  '<button onclick="checktotalnum('+j+')" disabled="disabled" id="chooseappoint' + j + '" class="btn btn-default"  data-toggle="modal" data-target="#appoint">预约</button><button id="checkappoint' + j + '" disabled="disabled" style="margin-left:3%" class="btn btn-default" onclick="chakanapp(' + j + ')" data-toggle="modal" data-target="#checkappointmodal">查看预约情况</button><button onclick="checktotalnum(' + j +')" id=send' + j +' disabled="disabled" class="btn btn-default" style="margin-left:3%" data-toggle="modal" data-target="#sendmessage">发送短信</button><button disabled="disabled" style="margin-left: 17%"  onclick="handlebutton(this,' + j + ')" class="btn btn-primary" id="pause' + j + '" type="button">暂停子计划</button></div></div>' +
+                                  '<button onclick="checktotalnum('+j+')" disabled="disabled" id="chooseappoint' + j + '" class="btn btn-default"  data-toggle="modal" data-target="#appoint">预约</button><button id="checkappoint' + j + '" disabled="disabled" style="margin-left:3%" class="btn btn-default" onclick="chakanapp(' + j + ')" data-toggle="modal" data-target="#checkappointmodal">查看预约情况</button><button onclick="message(' + j +')" id=send' + j +' disabled="disabled" class="btn btn-default" style="margin-left:3%" data-toggle="modal" data-target="#sendmessage">发送短信</button><button disabled="disabled" style="margin-left: 17%"  onclick="handlebutton(this,' + j + ')" class="btn btn-primary" id="pause' + j + '" type="button">暂停子计划</button></div></div>' +
                                   '<div class="single-row"><div class="item col-xs-12"><span style="margin-left:10%">(预约后将清除此子计划的已有预约)</span></div></div>'+
                                    '<div class="single-row"><div class="item col-xs-4">射野数量：<span id="IlluminatedNumber' + j + '" class="underline"></span></div><div class="item col-xs-4">非共面照射：<span id="Coplanar' + j + '" class="underline"></span></div><div class="item col-xs-4">机器跳数：<span id="MachineNumbe' + j + '" class="underline"></span></div></div>' +
                                   '<div class="single-row"><div class="item col-xs-4">控制点数量：<span id="ControlPoint' + j + '" class="underline"></span></div><div class="item col-xs-4">射线类型：<span id="raytype' + j + '" class="underline"></span></div><div class="col-xs-4"> <span class="form-text col-xs-5" style="padding-left:0px;">分割方式：</span><select  id="splitway' + j + '" disabled="disabled" class="col-xs-7 form-item" name="splitway' + j + '"></select></div></div>' +
@@ -242,6 +242,10 @@ function Init(evt) {
       //进行预约
       $("#chooseappoint" + i).unbind("click").click(function () {
           CreateNewAppiontTable(event);
+      });
+      //发送短信
+      $("#send" + i).unbind("click").click(function () {
+          CreateNewMessage(event);
       });
   }
 
@@ -649,6 +653,32 @@ function CreateNewAppiontTable(evt) {
     var json = xmlHttp.responseText;
     equipmentfrominfo = eval("(" + json + ")");
     CreateCurrentEquipmentTbale(date);
+}
+
+//根据病人及预约时间发送短信
+function CreateNewMessage(evt) {
+    evt.preventDefault();
+    var messageModal = document.getElementById("messageModal");
+    var currentIndex = messageModal.selectedIndex;
+    var messageID = messageModal.options[currentIndex].value;
+    var appotime1 = '"' + info[0].appdate.split(" ")[0] + ' ' + toTime(info[0].timeinfo[0].begintime) + '"';
+    var appotime2 = '"' + info[1].appdate.split(" ")[0] + ' ' + toTime(info[1].timeinfo[1].begintime) + '"';
+    if (DateTime.Now().GetDateTimeFirmats('g')[0].ToString() < appotime1) {
+        $("#appointTime").val(appotime1);
+    } else {
+        if (DateTime.Now().GetDateTimeFirmats('g')[0].ToString() < appotime2) {
+            $("#appointTime").val(appotime2);
+        } else {
+            $("#send").attr("disabled", "disabled");
+            $("#appointTime").val("--");
+        }
+    }
+    var xmlHttp = new XMLHttpRequest();
+    var url = "GetMessageModal.ashx?messageID=" + messageModal;
+    xmlHttp.open("GET", url, false);
+    xmlHttp.send(null);
+    var json = xmlHttp.responseText;
+    messageinfo = eval("(" + json + ")");
 }
 
 //删除某节点的所有子节点
@@ -1206,6 +1236,68 @@ function chakanapp(number) {
         }
     });
 }
+
+//查询病人预约时间
+//function message(number) {
+//    $("#appointTime").empty();
+//    $.ajax({
+//        type: "POST",
+//        url: "achievealldesign.ashx",
+//        async: false,
+//        data: {
+//            patientid: patientid,
+//            chid: childdesigns[number].chid,
+//            treatmentid: ""
+//        },
+//        dateType: "json",
+//        success: function (data) {
+//            var group = eval("(" + data + ")");
+//            var info = group.info;
+//            if (info.length == 0) {
+//                $("#appointTime").html("没有预约信息");
+//            }
+//            var content = '';
+//            if(info[])
+
+//            for (var i = 0; i < info.length; i++) {
+//                var rowscount = 0;
+//                for (var j = 0; j < info[i].timeinfo.length; j++) {
+//                    rowscount = rowscount + info[i].timeinfo[j].childgesin.length;
+//                }
+//                for (var k = 0; k < info[i].timeinfo.length; k++) {
+//                    for (var m = 0; m < info[i].timeinfo[k].childgesin.length; m++) {
+//                        if (k == 0 && m == 0) {
+//                            if (info[i].timeinfo[k].childgesin[m].chid == childdesigns[number].chid) {
+//                                content = content + '<tr><td rowspan=' + rowscount + '>' + info[i].appdate.split(" ")[0] + '</td><td rowspan=' + info[i].timeinfo[k].childgesin.length + '>' + transfertime(toTime(info[i].timeinfo[k].begintime)) + "-" + transfertime(toTime(info[i].timeinfo[k].endtime)) + '</td><td  bgcolor="#ffff66">' + info[i].timeinfo[k].childgesin[m].Treatmentdescribe + "," + info[i].timeinfo[k].childgesin[m].designname + '</td><td  bgcolor="#ffff66">' + transferresult(info[i].timeinfo[k].childgesin[m].isfirst, info[i].timeinfo[k].childgesin[m].istreated) + '</td></tr>';
+//                            } else {
+//                                content = content + '<tr><td rowspan=' + rowscount + '>' + info[i].appdate.split(" ")[0] + '</td><td rowspan=' + info[i].timeinfo[k].childgesin.length + '>' + transfertime(toTime(info[i].timeinfo[k].begintime)) + "-" + transfertime(toTime(info[i].timeinfo[k].endtime)) + '</td><td>' + info[i].timeinfo[k].childgesin[m].Treatmentdescribe + "," + info[i].timeinfo[k].childgesin[m].designname + '</td><td >' + transferresult(info[i].timeinfo[k].childgesin[m].isfirst, info[i].timeinfo[k].childgesin[m].istreated) + '</td></tr>';
+//                            }
+//                        }
+//                        if (k > 0 && m == 0) {
+//                            if (info[i].timeinfo[k].childgesin[m].chid == childdesigns[number].chid) {
+//                                content = content + '<td rowspan=' + info[i].timeinfo[k].childgesin.length + '>' + transfertime(toTime(info[i].timeinfo[k].begintime)) + "-" + transfertime(toTime(info[i].timeinfo[k].endtime)) + '</td><td bgcolor="#ffff66">' + info[i].timeinfo[k].childgesin[m].Treatmentdescribe + "," + info[i].timeinfo[k].childgesin[m].designname + '</td><td bgcolor="#ffff66">' + transferresult(info[i].timeinfo[k].childgesin[m].isfirst, info[i].timeinfo[k].childgesin[m].istreated) + '</td></tr>';
+//                            } else {
+//                                content = content + '<td rowspan=' + info[i].timeinfo[k].childgesin.length + '>' + transfertime(toTime(info[i].timeinfo[k].begintime)) + "-" + transfertime(toTime(info[i].timeinfo[k].endtime)) + '</td><td>' + info[i].timeinfo[k].childgesin[m].Treatmentdescribe + "," + info[i].timeinfo[k].childgesin[m].designname + '</td><td>' + transferresult(info[i].timeinfo[k].childgesin[m].isfirst, info[i].timeinfo[k].childgesin[m].istreated) + '</td></tr>';
+//                            }
+//                        }
+//                        if (m > 0) {
+//                            if (info[i].timeinfo[k].childgesin[m].chid == childdesigns[number].chid) {
+//                                content = content + '<td bgcolor="#ffff66">' + info[i].timeinfo[k].childgesin[m].Treatmentdescribe + "," + info[i].timeinfo[k].childgesin[m].designname + '</td><td bgcolor="#ffff66">' + transferresult(info[i].timeinfo[k].childgesin[m].isfirst, info[i].timeinfo[k].childgesin[m].istreated) + '</td></tr>';
+//                            } else {
+//                                content = content + '<td>' + info[i].timeinfo[k].childgesin[m].Treatmentdescribe + "," + info[i].timeinfo[k].childgesin[m].designname + '</td><td>' + transferresult(info[i].timeinfo[k].childgesin[m].isfirst, info[i].timeinfo[k].childgesin[m].istreated) + '</td></tr>';
+//                            }
+//                        }
+
+//                    }
+//                }
+//            }
+//            $("#appointcheckbody").append(content);
+//        },
+//        error: function (data) {
+//            alert("error");
+//        }
+//    });
+//}
 
 //转换函数
 function transferresult(args1, args2) {
